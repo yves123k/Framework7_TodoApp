@@ -3,15 +3,76 @@
    ============================================================ */
 
 /* Couleur principale du thème (orange) */
-:root {
-    --f7-theme-color: #e8590c;
-    --f7-theme-color-rgb: 232, 89, 12;
-    --f7-theme-color-shade: #cf5009;
-    --f7-theme-color-tint: #f06a1e;
+
+.theme-dark {
+    /* =========================
+       CORE COLORS
+    ========================= */
+
+    --color-primary: #818CF8;
+    --color-primary-rgb: 129, 140, 248;
+    --color-primary-hover: #6366F1;
+    --color-primary-soft: #A5B4FC;
+
+    --color-background: #0F172A;
+    --color-background-deep: #0B1120;
+
+    --color-surface: #111827;
+    --color-surface-soft: #1E293B;
+    --color-surface-hover: #263244;
+
+    --color-text: #F9FAFB;
+    --color-text-muted: #94A3B8;
+    --color-text-soft: #CBD5E1;
+    --color-text-disabled: #64748B;
+
+    --color-border: #1F2937;
+    --color-border-soft: #263244;
+
+    /* =========================
+       STATUS COLORS
+    ========================= */
+
+    --color-success: #22C55E;
+    --color-warning: #F59E0B;
+    --color-danger: #F87171;
+    --color-info: #38BDF8;
+
+    /* =========================
+       UI SYSTEM
+    ========================= */
+
+    --radius-small: 10px;
+    --radius-medium: 16px;
+    --radius-large: 22px;
+    --radius-xl: 28px;
+
+    --shadow-small: 0 8px 20px rgba(0, 0, 0, 0.22);
+    --shadow-medium: 0 14px 35px rgba(0, 0, 0, 0.30);
+    --shadow-large: 0 22px 55px rgba(0, 0, 0, 0.40);
+
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 16px;
+    --space-lg: 22px;
+    --space-xl: 32px;
 }
 
 .page-content {
     padding-bottom: 16px;
 }
+
+
+#champ-tache{
+    width: 100%; 
+    border: 0;
+}
+
+
+#btn-ajouter{
+    border-radius: 20px;
+    background-color: #263244;
+}
+
 
 /* SÉANCE 3 : ajouter ici le style de la tâche cochée (texte barré) */
