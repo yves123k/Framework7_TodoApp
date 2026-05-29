@@ -140,12 +140,14 @@ function ajouterTache() {
     taches.push(newTache);
 
     afficherTaches();
+    sauvegarder();
 
     champTache.val('');
 }
 
 function supprimerTache(id) {
     taches = taches.filter(function (t) { return t.id !== parseInt(id, 10); });
+    sauvegarder();
     afficherTaches();
 }
 
@@ -188,6 +190,7 @@ function basculerTache(id) {
 
         afficherTaches();
     }
+    sauvegarder()
 }
  
 $$(document).on('change', '.liste-taches input[type="checkbox"]', function () { 
