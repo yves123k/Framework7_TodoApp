@@ -1,92 +1,146 @@
 // ============================================================
-//  Ma ToDo — point de départ
-//  Écran unique, sans routage.
+// Ma ToDo — Framework7 + localStorage
 // ============================================================
 
-var $$ = Dom7; // utilitaire DOM intégré à Framework7
+var $$ = Dom7;
+
+// ============================================================
+// Variables globales
+// ============================================================
+
+// Clé utilisée dans localStorage
+var CLE = 'ma-todo-taches';
+
+// Filtre actif : toutes | afaire | faites
+var filtreActif = 'toutes';
+
+// Tableau principal des tâches
+var taches = chargerTaches();
+
+
+// ============================================================
+// Initialisation Framework7
+// ============================================================
 
 var app = new Framework7({
     el: '#app',
     name: 'MaToDo',
     theme: 'auto',
-    routes: routes,
+    routes: routes
 });
 
-var mainView = app.views.create('.view-main', { url: '/' });
+var mainView = app.views.create('.view-main', {
+    url: '/'
+});
+
 
 // ============================================================
-//  SÉANCE 2 — déclarer le tableau des tâches, puis :
-//    - une fonction afficher() qui construit la liste
-//    - une fonction ajouterTache(texte)
-//    - une fonction supprimerTache(id)
+// Sécurité texte
+// Évite l'injection HTML dans les tâches
 // ============================================================
 
-/*
-let taches = [
-    { id: 1, texte: "Module F7 - Introduction", fait: true },
-    { id: 2, texte: "Module F7 - Session 1", fait: true },
-    { id: 3, texte: "Module F7 - Session 2", fait: false },
-    { id: 4, texte: "Module F7 - Session 3", fait: false },
-];
-*/
-
-let taches = chargerTaches(); 
-//cle utiliser dans le localstorage
-var CLE = 'ma-todo-taches'; 
-
-//////////////////////////////////////////////////////////////////////::
-//actions
+function nettoyerTexte(texte) {
+    return String(texte)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
 
 
-//local storage
-// Sauvegarder : objet -> texte 
-function sauvegarder() { 
-localStorage.setItem(CLE, JSON.stringify(taches)); 
-} 
+// ============================================================
+// localStorage
+// ============================================================
 
-// Charger : texte -> objet (ou tâches d'exemple la première fois) 
-function chargerTaches() { 
-var data = localStorage.getItem(CLE); 
-if (data){
-    return JSON.parse(data)
-}; 
+function sauvegarder() {
+    try {
+        localStorage.setItem(CLE, JSON.stringify(taches));
+        console.log('Sauvegarde réussie :', taches);
+    } catch (error) {
+        console.error('Erreur localStorage sauvegarde :', error);
+    }
+}
 
-return []; 
-} 
+function chargerTaches() {
+    try {
+        var data = localStorage.getItem(CLE);
 
-//////////////////////////////////////////////////////////////////////:///
+        if (!data) {
+            return [];
+        }
+
+        var resultat = JSON.parse(data);
+
+        if (Array.isArray(resultat)) {
+            return resultat;
+        }
+
+        return [];
+
+    } catch (error) {
+        console.error('Erreur localStorage chargement :', error);
+        return [];
+    }
+}
 
 
-function afficherTaches() {
+// ============================================================
+// Filtrage
+// ============================================================
 
-    $$('.liste-taches').empty();
-
-    // Tableau filtré
-    let listeFiltre = taches;
-
+function tachesVisibles() {
     if (filtreActif === 'afaire') {
-
-        listeFiltre = taches.filter(function (t) {
+        return taches.filter(function (t) {
             return !t.fait;
         });
+    }
 
-    } else if (filtreActif === 'faites') {
-
-        listeFiltre = taches.filter(function (t) {
+    if (filtreActif === 'faites') {
+        return taches.filter(function (t) {
             return t.fait;
         });
     }
 
-    // Affichage des tâches
-    listeFiltre.forEach(function (tache) {
+    return taches;
+}
 
-        const li = `
-            <li class="item-content" data-id="${tache.id}">
+
+// ============================================================
+// Afficher les tâches
+// ============================================================
+
+function afficherTaches() {
+    var liste = $$('.liste-taches');
+
+    // Si la page tâches n'est pas encore affichée
+    if (liste.length === 0) {
+        return;
+    }
+
+    liste.empty();
+
+    var listeFiltre = tachesVisibles();
+
+    if (listeFiltre.length === 0) {
+        liste.append(`
+            <li class="item-content">
+                <div class="item-inner">
+                    <div class="item-title text-color-gray">
+                        Aucune tâche à afficher
+                    </div>
+                </div>
+            </li>
+        `);
+    }
+
+    listeFiltre.forEach(function (tache) {
+        var li = `
+            <li class="item-content tache-item" data-id="${tache.id}">
 
                 <div class="item-media">
                     <label class="checkbox">
-                        <input type="checkbox"
-                            ${tache.fait ? 'checked' : ''} />
+                        <input type="checkbox" ${tache.fait ? 'checked' : ''}>
                         <i class="icon-checkbox"></i>
                     </label>
                 </div>
@@ -94,7 +148,7 @@ function afficherTaches() {
                 <div class="item-inner">
 
                     <div class="item-title ${tache.fait ? 'tache-faite' : ''}">
-                        ${tache.texte}
+                        ${nettoyerTexte(tache.texte)}
                     </div>
 
                     <div class="item-after">
@@ -108,97 +162,89 @@ function afficherTaches() {
             </li>
         `;
 
-        $$('.liste-taches').append(li);
+        liste.append(li);
     });
 
-    // Compteur
-    var restantes = taches.filter(function (t) {
-        return !t.fait;
-    }).length;
-
-    $$('.compteur').text(
-        restantes + ' tâche(s) restante(s)'
-    );
+    mettreAJourCompteur();
+    mettreAJourBoutonsFiltre();
 }
 
 
+// ============================================================
+// Ajouter une tâche
+// ============================================================
 
 function ajouterTache() {
-    const champTache = $$('#saisie-tache');
-    const saisieTache = champTache.val()
+    var champTache = $$('#saisie-tache');
 
-    if (saisieTache.trim() === '') return;
-
-    const newId = taches.reduce(function (m, t) { return Math.max(m, t.id); }, 0) + 1;
-
-    const newTache = {
-        id: newId,
-        texte: saisieTache.trim(),
-        fait: false,
+    if (champTache.length === 0) {
+        return;
     }
 
-    taches.push(newTache);
+    var saisieTache = champTache.val();
 
-    afficherTaches();
+    if (saisieTache.trim() === '') {
+        app.dialog.alert('Veuillez saisir une tâche.');
+        return;
+    }
+
+    var newId = taches.reduce(function (max, t) {
+        return Math.max(max, t.id);
+    }, 0) + 1;
+
+    var nouvelleTache = {
+        id: newId,
+        texte: saisieTache.trim(),
+        fait: false
+    };
+
+    taches.push(nouvelleTache);
+
     sauvegarder();
+    afficherTaches();
 
     champTache.val('');
 }
 
+
+// ============================================================
+// Supprimer une tâche
+// ============================================================
+
 function supprimerTache(id) {
-    taches = taches.filter(function (t) { return t.id !== parseInt(id, 10); });
+    id = parseInt(id, 10);
+
+    taches = taches.filter(function (t) {
+        return t.id !== id;
+    });
+
     sauvegarder();
     afficherTaches();
 }
 
-$$(document).on('click', '#btn-ajouter', function () {
-    ajouterTache();
-});
 
-// Ajout en appuyant sur Entrée
-$$(document).on('keypress', '#saisie-tache', function (e) {
-    if (e.keyCode === 13) {
-        e.preventDefault();
-
-        ajouterTache();
-    }
-});
-
-$$(document).on('click', '.btn-suppr', function (e) {
-    e.preventDefault();
-
-    const id = $$(this).parents('.item-content').attr('data-id');
-    supprimerTache(id);
-});
-
-$$(document).on('page:init', '.page[data-name="taches"]', function () {
-    afficherTaches(); // premier appel de la fonction
-});
-
-
-
-//Cocher decocher
+// ============================================================
 // Cocher / décocher une tâche
-function basculerTache(id) {
+// ============================================================
 
-    var t = taches.find(function (x) {
-        return x.id === parseInt(id, 10);
+function basculerTache(id, estCochee) {
+    id = parseInt(id, 10);
+
+    var tache = taches.find(function (t) {
+        return t.id === id;
     });
 
-    if (t) {
-        t.fait = !t.fait;
-
+    if (tache) {
+        tache.fait = estCochee;
+        sauvegarder();
         afficherTaches();
     }
-    sauvegarder()
 }
- 
-$$(document).on('change', '.liste-taches input[type="checkbox"]', function () { 
-  var id = $$(this).parents('.item-content').attr('data-id'); 
-  basculerTache(id);
-  console.log(id);
-});
 
+
+// ============================================================
+// Compteur
+// ============================================================
 
 function mettreAJourCompteur() {
     var restantes = taches.filter(function (t) {
@@ -209,39 +255,72 @@ function mettreAJourCompteur() {
 }
 
 
+// ============================================================
+// Boutons filtres
+// ============================================================
 
-//taches fiter
-var filtreActif = 'toutes'; 
-  
-function tachesVisibles() { 
-  if (filtreActif === 'afaire') return taches.filter(function (t) { return !t.fait; }); 
-  if (filtreActif === 'faites') return taches.filter(function (t) { return t.fait; }); 
-  return taches; 
-} 
-// dans afficher() : utiliser tachesVisibles() au lieu de taches 
-  
-$$(document).on('click', '.filtre-btn', function () { 
-  $$('.filtre-btn').removeClass('button-active'); 
-  $$(this).addClass('button-active'); 
-  filtreActif = $$(this).attr('data-filtre');
-  afficherTaches();
+function mettreAJourBoutonsFiltre() {
+    $$('.filtre-btn').removeClass('button-active');
+    $$('.filtre-btn[data-filtre="' + filtreActif + '"]').addClass('button-active');
+}
+
+
+// ============================================================
+// Événements
+// ============================================================
+
+// Ajouter avec le bouton
+$$(document).on('click', '#btn-ajouter', function (e) {
+    e.preventDefault();
+    ajouterTache();
 });
 
+// Ajouter avec Entrée
+$$(document).on('keydown', '#saisie-tache', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        ajouterTache();
+    }
+});
 
+// Supprimer
+$$(document).on('click', '.btn-suppr', function (e) {
+    e.preventDefault();
 
+    var id = $$(this).parents('.item-content').attr('data-id');
 
+    app.dialog.confirm(
+        'Voulez-vous vraiment supprimer cette tâche ?',
+        'Confirmation',
+        function () {
+            supprimerTache(id);
+        }
+    );
+});
 
+// Cocher / décocher
+$$(document).on('change', '.liste-taches input[type="checkbox"]', function () {
+    var id = $$(this).parents('.item-content').attr('data-id');
+    var estCochee = this.checked;
 
+    basculerTache(id, estCochee);
+});
 
+// Filtres
+$$(document).on('click', '.filtre-btn', function (e) {
+    e.preventDefault();
 
-//  SÉANCE 3 — ajouter :
-//    - basculerTache(id) pour cocher / décocher
-//    - le compteur de tâches restantes
-//    - les filtres (Toutes / À faire / Faites)
-//    - chargerTaches() et sauvegarder() avec localStorage
-// ------------------------------------------------------------
+    filtreActif = $$(this).attr('data-filtre');
 
-// Exemple de structure de données (à activer en séance 2) :
-// var taches = [
-//   { id: 1, texte: "Réviser l'algorithmique", fait: false },
-// ];
+    afficherTaches();
+});
+
+// Quand la page tâches est initialisée
+$$(document).on('page:init', '.page[data-name="taches"]', function () {
+    afficherTaches();
+});
+
+// Quand on revient sur la page tâches
+$$(document).on('page:afterin', '.page[data-name="taches"]', function () {
+    afficherTaches();
+});
