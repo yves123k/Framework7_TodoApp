@@ -4,40 +4,24 @@
 
 var $$ = Dom7;
 
-// ============================================================
-// Variables globales
-// ============================================================
-
-// Clé utilisée dans localStorage
 var CLE = 'ma-todo-taches';
-
-// Filtre actif : toutes | afaire | faites
 var filtreActif = 'toutes';
-
-// Tableau principal des tâches
 var taches = chargerTaches();
-
-
-// ============================================================
-// Initialisation Framework7
-// ============================================================
 
 var app = new Framework7({
     el: '#app',
     name: 'MaToDo',
     theme: 'auto',
-    routes: routes
+    routes: routes,
+    view: {
+        browserHistory: true,
+        browserHistorySeparator: '#!'
+    }
 });
 
 var mainView = app.views.create('.view-main', {
     url: '/'
 });
-
-
-// ============================================================
-// Sécurité texte
-// Évite l'injection HTML dans les tâches
-// ============================================================
 
 function nettoyerTexte(texte) {
     return String(texte)
@@ -47,11 +31,6 @@ function nettoyerTexte(texte) {
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
 }
-
-
-// ============================================================
-// localStorage
-// ============================================================
 
 function sauvegarder() {
     try {
@@ -77,17 +56,11 @@ function chargerTaches() {
         }
 
         return [];
-
     } catch (error) {
         console.error('Erreur localStorage chargement :', error);
         return [];
     }
 }
-
-
-// ============================================================
-// Filtrage
-// ============================================================
 
 function tachesVisibles() {
     if (filtreActif === 'afaire') {
@@ -105,15 +78,9 @@ function tachesVisibles() {
     return taches;
 }
 
-
-// ============================================================
-// Afficher les tâches
-// ============================================================
-
 function afficherTaches() {
     var liste = $$('.liste-taches');
 
-    // Si la page tâches n'est pas encore affichée
     if (liste.length === 0) {
         return;
     }
@@ -137,7 +104,6 @@ function afficherTaches() {
     listeFiltre.forEach(function (tache) {
         var li = `
             <li class="item-content tache-item" data-id="${tache.id}">
-
                 <div class="item-media">
                     <label class="checkbox">
                         <input type="checkbox" ${tache.fait ? 'checked' : ''}>
@@ -146,7 +112,6 @@ function afficherTaches() {
                 </div>
 
                 <div class="item-inner">
-
                     <div class="item-title ${tache.fait ? 'tache-faite' : ''}">
                         ${nettoyerTexte(tache.texte)}
                     </div>
@@ -156,9 +121,7 @@ function afficherTaches() {
                             <i class="icon f7-icons">trash</i>
                         </a>
                     </div>
-
                 </div>
-
             </li>
         `;
 
@@ -168,11 +131,6 @@ function afficherTaches() {
     mettreAJourCompteur();
     mettreAJourBoutonsFiltre();
 }
-
-
-// ============================================================
-// Ajouter une tâche
-// ============================================================
 
 function ajouterTache() {
     var champTache = $$('#saisie-tache');
@@ -206,11 +164,6 @@ function ajouterTache() {
     champTache.val('');
 }
 
-
-// ============================================================
-// Supprimer une tâche
-// ============================================================
-
 function supprimerTache(id) {
     id = parseInt(id, 10);
 
@@ -221,11 +174,6 @@ function supprimerTache(id) {
     sauvegarder();
     afficherTaches();
 }
-
-
-// ============================================================
-// Cocher / décocher une tâche
-// ============================================================
 
 function basculerTache(id, estCochee) {
     id = parseInt(id, 10);
@@ -241,11 +189,6 @@ function basculerTache(id, estCochee) {
     }
 }
 
-
-// ============================================================
-// Compteur
-// ============================================================
-
 function mettreAJourCompteur() {
     var restantes = taches.filter(function (t) {
         return !t.fait;
@@ -254,28 +197,16 @@ function mettreAJourCompteur() {
     $$('.compteur').text(restantes + ' tâche(s) restante(s)');
 }
 
-
-// ============================================================
-// Boutons filtres
-// ============================================================
-
 function mettreAJourBoutonsFiltre() {
     $$('.filtre-btn').removeClass('button-active');
     $$('.filtre-btn[data-filtre="' + filtreActif + '"]').addClass('button-active');
 }
 
-
-// ============================================================
-// Événements
-// ============================================================
-
-// Ajouter avec le bouton
 $$(document).on('click', '#btn-ajouter', function (e) {
     e.preventDefault();
     ajouterTache();
 });
 
-// Ajouter avec Entrée
 $$(document).on('keydown', '#saisie-tache', function (e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -283,7 +214,6 @@ $$(document).on('keydown', '#saisie-tache', function (e) {
     }
 });
 
-// Supprimer
 $$(document).on('click', '.btn-suppr', function (e) {
     e.preventDefault();
 
@@ -298,7 +228,6 @@ $$(document).on('click', '.btn-suppr', function (e) {
     );
 });
 
-// Cocher / décocher
 $$(document).on('change', '.liste-taches input[type="checkbox"]', function () {
     var id = $$(this).parents('.item-content').attr('data-id');
     var estCochee = this.checked;
@@ -306,21 +235,17 @@ $$(document).on('change', '.liste-taches input[type="checkbox"]', function () {
     basculerTache(id, estCochee);
 });
 
-// Filtres
 $$(document).on('click', '.filtre-btn', function (e) {
     e.preventDefault();
 
     filtreActif = $$(this).attr('data-filtre');
-
     afficherTaches();
 });
 
-// Quand la page tâches est initialisée
 $$(document).on('page:init', '.page[data-name="taches"]', function () {
     afficherTaches();
 });
 
-// Quand on revient sur la page tâches
 $$(document).on('page:afterin', '.page[data-name="taches"]', function () {
     afficherTaches();
 });
